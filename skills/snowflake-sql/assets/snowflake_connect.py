@@ -11,10 +11,10 @@ import sys
 def connect_to_snowflake(
     account='NBA-DATA',  # NBA Snowflake account from connections.toml
     user=None,  # Your NBA SSO email — set via SNOWFLAKE_USER env var or pass directly
-    warehouse='FR_ANALYST_WH',  # From memory: FR_ANALYST role uses this warehouse
+    warehouse='YOUR_WAREHOUSE',  # Set to your Snowflake warehouse (e.g. VWH_DSA_DEV)
     database=None,
     schema=None,
-    role='FR_ANALYST'  # Default FDVS analyst role — update if your role differs
+    role='YOUR_SNOWFLAKE_ROLE'  # Set to your Snowflake role (e.g. FR_ANALYST, SYSADMIN)
 ):
     """
     Connect to NBA Snowflake using SSO authentication.
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
         # Test query - show databases you have access to
         print("\n" + "="*50)
-        print("Databases accessible with FR_ANALYST role:")
+        print("Databases accessible with your role:")
         print("="*50)
 
         results = run_query(conn, "SHOW DATABASES")

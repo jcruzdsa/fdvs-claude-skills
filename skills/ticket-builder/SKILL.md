@@ -77,7 +77,7 @@ Always populate these via `mcp__plugin_atlassian_atlassian__createJiraIssue`.
 | `summary` | Verb-first, ≤70 chars: "Add X", "Fix Y", "Migrate Z" |
 | `description` | Use ADF format. Lead with user story. Include AC and working group table. |
 | `assignee` | Read from `config.local.yaml → atlassian.default_assignee_account_id` (or ask who to assign). **Template F exception:** assign to the technical lead for that layer — NOT the ticket creator. |
-| `components` | Always include at minimum `Fan Data Value Stream`. **Template F exception:** use `Fan Data Value Stream` for identity/DE layer work; use `Analytics Engineering` for dbt/AE layer work. |
+| `components` | Always include at minimum `Fan Data Value Stream`. **Template F exception:** use `Fan Data Value Stream` for identity/DE layer work; use `Analytics Engineering` for dbt/AE layer work. *(These component names are specific to the NBA `IDE` Jira project — they must exist in your project before tickets can be created with them.)* |
 | `labels` | Match existing IDE project labels — look them up if unsure |
 
 **Style guide links to include in description (per memory rule `feedback_jira_style_guide_references`):**

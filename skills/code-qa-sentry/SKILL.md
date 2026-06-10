@@ -20,6 +20,8 @@ In-scope repos (clone path: `~/nba-repos/`):
 - `fandata_dbt`
 - Future: any repo added under `~/nba-repos/`
 
+> **Note:** `/qa-learn` scans `~/nba-repos/` to build `code_patterns.md`. If your repos live elsewhere, clone them to `~/nba-repos/` or update the scan path here before running `/qa-learn`.
+
 Authoritative pattern file: `~/.claude/projects/memory/code_patterns.md` (path configurable via `team.code_patterns_file` in config.local.yaml)
 
 ## Three Entry Points

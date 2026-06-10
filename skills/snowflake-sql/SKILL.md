@@ -30,7 +30,7 @@ Centralized Snowflake warehouse: 60+ sources, NBA + WNBA.
 | QA | `DB_FANDATA_QA` | `FR_DATAENGINEER_QA` | `VWH_DE_QA` |
 | PRD | `DB_FANDATA_PRD` | `FR_DATAENGINEER_PRD` | `VWH_DE_ETL_PRD` |
 
-**Default analyst role:** `FR_ANALYST` on `DB_FANDATA_DEV` / `VWH_DSA_DEV` — override via config.local.yaml if your role differs
+**Default analyst role:** Set via `snowflake.role` in config.local.yaml (e.g. `FR_ANALYST` for FDVS analysts) — different team members use different roles
 
 Other databases: `DB_WNBA_FANDATA_*`, `DB_FIVETRAN_PII`, `DB_SHARED_BRAZEDATALAKE`, `DB_SHARED_APPSFLYER_W`, `DB_RAW_PRD`, `DB_FANDATA_GOLD_PRD`, `DB_AI_SEMANTICS`, `DB_FANANALYTICS`
 
@@ -432,7 +432,7 @@ alter table private.unified_fan_id_email modify column email_address set masking
 
 | Size | Use Case | When to Use |
 |---|---|---|
-| X-Small | Dev/testing, ad-hoc exploration | Default for FR_ANALYST ad-hoc work (`VWH_DSA_DEV`) |
+| X-Small | Dev/testing, ad-hoc exploration | Default for ad-hoc work (`VWH_DSA_DEV`) |
 | Small | Production ETL (<100GB) | Nightly loads, small feeds |
 | Medium | Production ETL (100GB–1TB) | Fan data aggregations, medium complexity |
 | Large | Complex transformations (1TB+) | Historical backfills, ML feature engineering |
