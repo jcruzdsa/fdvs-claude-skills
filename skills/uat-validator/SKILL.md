@@ -26,7 +26,7 @@ Use `mcp__plugin_atlassian_atlassian__getJiraIssue` with the provided ticket key
 
 ### Step 2: Pull column metadata
 
-Use `mcp__plugin_atlassian_atlassian__fetch` or a direct Snowflake query (if available) to get column names from:
+Run a direct Snowflake query (via `snow sql`) to get column names:
 ```
 SELECT column_name, data_type, is_nullable
 FROM <DB>.INFORMATION_SCHEMA.COLUMNS
@@ -34,7 +34,7 @@ WHERE table_schema = '<SCHEMA>'
   AND table_name = '<TABLE>'
 ORDER BY ordinal_position
 ```
-If Snowflake is not directly accessible from this session, note that Cortex will introspect columns at runtime and skip this step.
+If Snowflake is not directly accessible from this session, Cortex will introspect columns at runtime — skip this step.
 
 ### Step 3: Build the test plan
 

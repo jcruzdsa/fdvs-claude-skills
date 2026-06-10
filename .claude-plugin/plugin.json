@@ -1,7 +1,7 @@
 {
   "name": "fdvs-skills",
   "version": "1.0.0",
-  "description": "Personal skills and workflows for Fan Data Value Stream work — ticket creation, DQ assessment, PR review, UAT validation",
+  "description": "Skills for Fan Data Value Stream work — ticket creation, DQ assessment, UAT validation, Snowflake SQL development, and code QA",
   "author": {
     "name": "FDVS Team Member"
   },
@@ -9,8 +9,7 @@
     "nba",
     "fan-data",
     "snowflake",
-    "fev",
-    "ffv",
-    "dbt"
+    "dbt",
+    "jira"
   ]
 }

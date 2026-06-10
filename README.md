@@ -1,6 +1,6 @@
 # FDVS Claude Skills
 
-A collection of Claude Code skills for Fan Data Value Stream (FDVS) work at the NBA — Jira/Confluence ticket creation, Snowflake SQL development, data quality assessments, PR review, UAT validation, and code QA.
+A collection of Claude Code skills for Fan Data Value Stream (FDVS) work at the NBA — Jira/Confluence ticket creation, Snowflake SQL development, data quality assessments, UAT validation, and code QA.
 
 > **FDVS** (Fan Data Value Stream) is the NBA's cross-functional data team responsible for fan data ingestion, the Fan Data Platform (FDP), analytics engineering, and the models and pipelines that power fan engagement insights. [Learn more →](https://nba.atlassian.net/wiki/x/XoBgRw)
 
@@ -68,12 +68,6 @@ atlassian:
   cloud_id: "your-cloud-id-here"       # Jira cloud ID
   project_key: "IDE"                    # Jira project key
   default_assignee_account_id: "your-account-id-here"
-
-snowflake:
-  account: "your-account-identifier"
-  warehouse: "your-warehouse"
-  database: "DB_FANANALYTICS"
-  schema: "YOUR_DEV_SCHEMA"
 ```
 
 `config.local.yaml` is gitignored — your credentials stay local.

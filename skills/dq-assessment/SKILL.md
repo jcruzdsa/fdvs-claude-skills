@@ -3,7 +3,7 @@ name: dq-assessment
 description: >-
   Full data quality assessment for NBA FDP Snowflake tables. Use WHEN asked
   to QA, assess, audit, or validate a table. Runs a standardized test battery
-  using Opus 4.7 for queries and Sonnet for the written report. Covers PK
+  using claude-opus-4-5 for queries and Sonnet for the written report. Covers PK
   integrity, temporal logic, fill rates, ETL audit columns, row_hash collisions,
   value set anomalies, and FDP-specific gotchas (epoch-zero dates, fan_id > 0,
   UNKNOWN category, sentinel values). Produces a prioritized P1/P2/P3 findings
@@ -17,7 +17,7 @@ description: >-
 ## Core Behavior
 
 **Model switching (mandatory):**
-- Use **Opus 4.7** to execute all Snowflake queries via `snow sql --connection NBA-DATA`
+- Use **claude-opus-4-5** to execute all Snowflake queries via `snow sql --connection NBA-DATA`
 - Use **Sonnet** to write the findings report
 
 **Scope:** Find inconsistencies and weird anomalies. Do NOT focus on fill rates for first-party data tables (ATTRIBUTES, DWH_* tables) — fill rates are expected to be low and are not findings unless combined with logical inconsistencies.

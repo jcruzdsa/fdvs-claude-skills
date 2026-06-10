@@ -8,7 +8,6 @@ Use the right skill before responding. These skills are part of this plugin:
 |---|---|
 | Jira tickets / Confluence specs | `ticket-builder` |
 | DQ assessment on a Snowflake table | `dq-assessment` |
-| PR review (FEV/FFV pipeline) | `fev-pr-review` |
 | Code review against FDVS conventions | `code-qa-sentry` |
 | UAT validation | `uat-validator` |
 | Snowflake SQL development | `snowflake-sql` *(routes to Cortex Code CLI — do not execute SQL directly in Claude)* |
