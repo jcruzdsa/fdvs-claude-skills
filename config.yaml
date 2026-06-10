@@ -1,0 +1,17 @@
+# Configuration for fdvs-personal plugin
+# Copy this file and fill in values for your environment.
+# The ticket-builder skill reads these values — update them before using that skill.
+
+atlassian:
+  cloud_id: "YOUR_CLOUD_ID"              # e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  project_key: "IDE"                      # Jira project key for FDVS work
+  default_assignee_account_id: "YOUR_ACCOUNT_ID"  # Your Atlassian account ID
+
+team:
+  name: "Fan Data Value Stream"
+  stream: "FDVS"
+  snowflake_dev_schema: "DB_FANANALYTICS.YOUR_DEV_SCHEMA"
+
+references:
+  sql_style_guide_url: "https://nba.atlassian.net/wiki/spaces/NGEW/pages/8719696245/SQL+Style+Guide"
+  dbt_guide_url: "https://nba.atlassian.net/wiki/spaces/DPAE/pages/8861876661/dbt+Guide"

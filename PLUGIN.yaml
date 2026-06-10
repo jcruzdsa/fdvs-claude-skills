@@ -1,0 +1,17 @@
+name: fdvs-personal
+version: 1.0.0
+description: Personal skills and workflows for Fan Data Value Stream work — ticket creation, DQ assessment, PR review, UAT validation
+author: FDVS Team Member
+homepage: https://github.com/jcruzdsa/fdvs-claude-skills
+license: MIT
+
+tags:
+  - fan-data
+  - snowflake
+  - dbt
+  - jira
+
+capabilities:
+  skills: true
+  tools: false
+  resources: false

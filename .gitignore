@@ -1,0 +1,14 @@
+# Personal config — never commit your own values
+config.local.yaml
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code session data
+.claude/projects/

@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jira + Snowflake Routing System — Fan Data Value Stream</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface2: #eef0f4;
+    --border: #dde1ea;
+    --border2: #cdd2de;
+    --text: #0f1624;
+    --muted: #5a6482;
+    --dim: #9aa3bb;
+
+    --claude: #1d6fd4;
+    --claude-glow: rgba(29,111,212,0.12);
+    --claude-dim: rgba(29,111,212,0.07);
+    --cortex: #0d9488;
+    --cortex-glow: rgba(13,148,136,0.12);
+    --cortex-dim: rgba(13,148,136,0.07);
+    --jira: #0052cc;
+    --jira-bright: #1d6fd4;
+    --gold: #b45309;
+    --red: #dc2626;
+    --green: #16a34a;
+
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-display: 'DM Serif Display', serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(245,246,248,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 52px;
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; }
+  .nav-brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--claude); box-shadow: 0 0 8px var(--claude); animation: pulse 2s ease-in-out infinite; }
+  .nav-brand span { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--text); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 6rem 2rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 500px;
+    background: radial-gradient(ellipse at center top, rgba(29,111,212,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--claude);
+    background: var(--claude-dim); border: 1px solid rgba(79,156,248,0.2);
+    padding: 4px 12px; border-radius: 100px; margin-bottom: 2rem;
+    opacity: 0; transform: translateY(12px);
+    animation: fadeUp 0.6s ease forwards 0.1s;
+  }
+  .hero h1 {
+    font-family: var(--font-display); font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 400; line-height: 1.1; margin-bottom: 1.5rem;
+    opacity: 0; transform: translateY(12px);
+    animation: fadeUp 0.6s ease forwards 0.25s;
+  }
+  .hero h1 em { font-style: italic; color: var(--claude); }
+  .hero p {
+    max-width: 520px; color: var(--muted); font-size: 17px; line-height: 1.7;
+    margin-bottom: 3rem;
+    opacity: 0; transform: translateY(12px);
+    animation: fadeUp 0.6s ease forwards 0.4s;
+  }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow-diagram {
+    width: 100%; max-width: 860px; margin: 0 auto;
+    opacity: 0; transform: translateY(16px);
+    animation: fadeUp 0.7s ease forwards 0.55s;
+  }
+
+  .flow-row {
+    display: flex; align-items: center; justify-content: center; gap: 0;
+    margin-bottom: 1.5rem;
+  }
+
+  .flow-node {
+    padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    white-space: nowrap;
+    position: relative;
+  }
+  .flow-node.input {
+    background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+  }
+  .flow-node.router {
+    background: linear-gradient(135deg, rgba(79,156,248,0.12), rgba(45,212,191,0.12));
+    border: 1px solid rgba(79,156,248,0.3);
+    color: var(--text); font-family: var(--font-mono); font-size: 12px;
+  }
+  .flow-node.claude-node {
+    background: var(--claude-dim); border: 1px solid rgba(79,156,248,0.3);
+    color: var(--claude); font-family: var(--font-mono);
+  }
+  .flow-node.cortex-node {
+    background: var(--cortex-dim); border: 1px solid rgba(45,212,191,0.3);
+    color: var(--cortex); font-family: var(--font-mono);
+  }
+
+  .flow-arrow {
+    display: flex; align-items: center;
+    padding: 0 8px; color: var(--dim);
+    font-size: 14px;
+  }
+  .flow-arrow.branch-label {
+    font-family: var(--font-mono); font-size: 10px;
+    flex-direction: column; gap: 2px; color: var(--muted);
+    padding: 0 4px;
+  }
+
+  .flow-split {
+    display: flex; gap: 3rem; margin-top: 0;
+  }
+  .flow-branch {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .flow-branch-label {
+    font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--muted);
+  }
+
+  .flow-outputs {
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 300px;
+  }
+  .flow-output-tag {
+    font-family: var(--font-mono); font-size: 10px; padding: 3px 8px;
+    border-radius: 4px; white-space: nowrap;
+  }
+  .flow-output-tag.claude-tag {
+    background: var(--claude-dim); color: var(--claude);
+    border: 1px solid rgba(79,156,248,0.2);
+  }
+  .flow-output-tag.cortex-tag {
+    background: var(--cortex-dim); color: var(--cortex);
+    border: 1px solid rgba(45,212,191,0.2);
+  }
+
+  /* ── SECTION LAYOUT ── */
+  section { padding: 5rem 2rem; }
+  .container { max-width: 960px; margin: 0 auto; }
+  .section-label {
+    font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.15em; color: var(--muted); margin-bottom: 0.75rem;
+  }
+  .section-title {
+    font-family: var(--font-display); font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 400; line-height: 1.2; margin-bottom: 1rem;
+  }
+  .section-desc { color: var(--muted); max-width: 520px; line-height: 1.7; margin-bottom: 3rem; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .reveal {
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0;
+  }
+
+  /* ── TWO LANE ── */
+  .two-lane {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.5px;
+    background: var(--border); border-radius: 12px; overflow: hidden;
+  }
+  .lane {
+    background: var(--surface); padding: 2rem;
+    transition: background 0.3s;
+  }
+  .lane:hover { background: var(--surface2); }
+  .lane-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;
+  }
+  .lane-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .lane-icon.claude-icon { background: var(--claude-dim); }
+  .lane-icon.cortex-icon { background: var(--cortex-dim); }
+  .lane-name { font-weight: 600; font-size: 16px; }
+  .lane-name.claude-name { color: var(--claude); }
+  .lane-name.cortex-name { color: var(--cortex); }
+  .lane-role { font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+
+  .lane-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .lane-list li {
+    display: flex; align-items: flex-start; gap: 8px;
+    font-size: 14px; color: var(--text); line-height: 1.5;
+  }
+  .lane-list li::before {
+    content: '→'; font-family: var(--font-mono); font-size: 12px;
+    margin-top: 2px; flex-shrink: 0;
+  }
+  .lane.claude-lane li::before { color: var(--claude); }
+  .lane.cortex-lane li::before { color: var(--cortex); }
+
+  .lane-divider {
+    border: none; height: 1px; background: var(--border); margin: 1.25rem 0;
+  }
+  .lane-warn {
+    display: flex; gap: 8px; align-items: flex-start;
+    background: rgba(220,38,38,0.05); border: 1px solid rgba(220,38,38,0.18);
+    border-radius: 6px; padding: 10px 12px; margin-top: 1rem;
+    font-size: 12px; color: #b91c1c;
+  }
+  .lane-warn .warn-icon { flex-shrink: 0; margin-top: 1px; }
+
+  /* ── PRIORITY TABLE ── */
+  .priority-table { width: 100%; border-collapse: collapse; }
+  .priority-table th {
+    text-align: left; padding: 8px 16px;
+    font-family: var(--font-mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  .priority-table td {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    font-size: 13px; vertical-align: top;
+  }
+  .priority-table tr:last-child td { border-bottom: none; }
+  .priority-table tr { transition: background 0.2s; }
+  .priority-table tr:hover td { background: var(--surface2); }
+
+  .priority-badge {
+    display: inline-block; font-family: var(--font-mono); font-size: 10px;
+    padding: 2px 7px; border-radius: 4px; font-weight: 500; white-space: nowrap;
+  }
+  .p-claude { background: var(--claude-dim); color: var(--claude); border: 1px solid rgba(79,156,248,0.2); }
+  .p-cortex { background: var(--cortex-dim); color: var(--cortex); border: 1px solid rgba(45,212,191,0.2); }
+  .p-either { background: rgba(245,158,11,0.1); color: var(--gold); border: 1px solid rgba(245,158,11,0.2); }
+
+  .trigger-chip {
+    display: inline-block; font-family: var(--font-mono); font-size: 11px;
+    padding: 1px 6px; border-radius: 3px;
+    background: var(--surface2); color: var(--muted);
+    border: 1px solid var(--border2); margin: 1px;
+  }
+
+  /* ── SKILL TABLE ── */
+  .search-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 8px 14px; margin-bottom: 1rem;
+  }
+  .search-bar input {
+    background: none; border: none; outline: none;
+    color: var(--text); font-family: var(--font-body); font-size: 14px;
+    flex: 1;
+  }
+  .search-bar input::placeholder { color: var(--dim); }
+  .search-bar .search-icon { color: var(--dim); font-size: 14px; }
+
+  .filter-pills { display: flex; gap: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .pill {
+    font-family: var(--font-mono); font-size: 11px; padding: 4px 12px;
+    border-radius: 100px; cursor: pointer; border: 1px solid transparent;
+    transition: all 0.15s; user-select: none;
+  }
+  .pill.all { background: var(--surface2); border-color: var(--border2); color: var(--muted); }
+  .pill.all.active, .pill.all:hover { background: var(--border2); color: var(--text); }
+  .pill.claude { background: var(--claude-dim); border-color: rgba(79,156,248,0.2); color: var(--claude); opacity: 0.6; }
+  .pill.claude.active, .pill.claude:hover { opacity: 1; }
+  .pill.cortex { background: var(--cortex-dim); border-color: rgba(45,212,191,0.2); color: var(--cortex); opacity: 0.6; }
+  .pill.cortex.active, .pill.cortex:hover { opacity: 1; }
+
+  .skill-grid { display: flex; flex-direction: column; gap: 2px; }
+  .skill-row {
+    display: grid; grid-template-columns: 180px 1fr 120px;
+    gap: 1rem; align-items: center;
+    padding: 10px 14px; border-radius: 6px;
+    transition: background 0.15s; cursor: default;
+  }
+  .skill-row:hover { background: var(--surface2); }
+  .skill-row.hidden { display: none; }
+
+  .skill-name {
+    font-family: var(--font-mono); font-size: 12px; color: var(--text);
+  }
+  .skill-desc { font-size: 13px; color: var(--muted); }
+  .skill-owner { text-align: right; }
+
+  /* ── GUARDRAILS ── */
+  .guardrail-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1px; background: var(--border); border-radius: 12px; overflow: hidden;
+  }
+  .guardrail-card {
+    background: var(--surface); padding: 1.5rem;
+    transition: background 0.2s;
+  }
+  .guardrail-card:hover { background: var(--surface2); }
+  .guardrail-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+  .guardrail-title { font-weight: 600; font-size: 14px; margin-bottom: 0.5rem; }
+  .guardrail-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .guardrail-code {
+    display: block; font-family: var(--font-mono); font-size: 11px;
+    background: var(--bg); padding: 6px 10px; border-radius: 4px;
+    margin-top: 8px; color: var(--green); border: 1px solid var(--border);
+  }
+  .guardrail-bad {
+    display: block; font-family: var(--font-mono); font-size: 11px;
+    background: var(--bg); padding: 6px 10px; border-radius: 4px;
+    margin-top: 4px; color: var(--red); border: 1px solid var(--border);
+    text-decoration: line-through; opacity: 0.7;
+  }
+
+  /* ── PIPELINE VIZ ── */
+  .pipeline-viz {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 2rem; overflow-x: auto;
+  }
+  .pipeline-track {
+    display: flex; align-items: center; gap: 0; min-width: 600px;
+    position: relative;
+  }
+  .pipeline-step {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    flex: 1;
+  }
+  .pipeline-dot {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0; position: relative; z-index: 2;
+  }
+  .pipeline-dot.human { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); }
+  .pipeline-dot.claude-dot { background: var(--claude-dim); border: 1px solid rgba(79,156,248,0.3); }
+  .pipeline-dot.cortex-dot { background: var(--cortex-dim); border: 1px solid rgba(45,212,191,0.3); }
+  .pipeline-dot.shared { background: var(--surface2); border: 1px solid var(--border2); }
+  .pipeline-label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-align: center; white-space: nowrap; }
+  .pipeline-sublabel { font-size: 11px; color: var(--dim); text-align: center; max-width: 90px; line-height: 1.4; }
+
+  .pipeline-connector {
+    height: 2px; flex: 1; position: relative; overflow: visible;
+    background: var(--border2); margin-bottom: 28px;
+  }
+  .pipeline-connector::after {
+    content: '';
+    position: absolute; left: 0; top: 0; height: 100%;
+    width: 30%; background: linear-gradient(90deg, var(--claude), var(--cortex));
+    animation: connectorFlow 3s ease-in-out infinite;
+  }
+  @keyframes connectorFlow {
+    0% { width: 0; left: 0; opacity: 1; }
+    50% { width: 100%; left: 0; opacity: 1; }
+    51% { width: 0; left: 100%; opacity: 0; }
+    100% { width: 0; left: 0; opacity: 0; }
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 2rem; text-align: center;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono); font-size: 11px; color: var(--dim);
+  }
+  footer span { color: var(--muted); }
+
+  /* ── JIRA ROWS ── */
+  .jira-row:hover { background: var(--surface2) !important; }
+  .template-badge {
+    display: inline-block; font-family: var(--font-mono); font-size: 10px;
+    padding: 2px 8px; border-radius: 4px; font-weight: 500; white-space: nowrap;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .two-lane { grid-template-columns: 1fr; }
+    .skill-row { grid-template-columns: 1fr; }
+    .skill-owner { text-align: left; }
+    nav .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="dot"></div>
+    <span>Fan Data Value Stream</span>
+  </div>
+  <div class="nav-links">
+    <a href="#model">Model</a>
+    <a href="#routing">Routing</a>
+    <a href="#skills">Skills</a>
+    <a href="#jira">Jira</a>
+    <a href="#guardrails">Guardrails</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">Internal Reference — FDVS Team</div>
+  <h1>The <em>Two-Engine</em> Dev System</h1>
+  <p>Claude thinks and plans. Cortex builds and ships. Every prompt routes to the right engine — here's how it works.</p>
+
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-node input">💬 Your prompt</div>
+      <div class="flow-arrow">──────</div>
+      <div class="flow-node router">route_request.py</div>
+      <div class="flow-arrow">──────</div>
+      <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
+        <div class="flow-node claude-node">→ Claude</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--dim)">plan · think · review</div>
+        <div class="flow-node cortex-node">→ Cortex</div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--dim)">build · run · iterate</div>
+      </div>
+    </div>
+    <div style="text-align:center; margin-top:1rem;">
+      <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+        <span class="flow-output-tag claude-tag">brainstorm</span>
+        <span class="flow-output-tag claude-tag">ticket-writing</span>
+        <span class="flow-output-tag claude-tag">PR review</span>
+        <span class="flow-output-tag claude-tag">architecture</span>
+        <span class="flow-output-tag cortex-tag">SQL</span>
+        <span class="flow-output-tag cortex-tag">Snowpark</span>
+        <span class="flow-output-tag cortex-tag">dbt models</span>
+        <span class="flow-output-tag cortex-tag">Streamlit in SF</span>
+        <span class="flow-output-tag cortex-tag">iterative build</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- PIPELINE WALKTHROUGH -->
+<section id="model">
+  <div class="container">
+    <p class="section-label reveal">How a task flows</p>
+    <h2 class="section-title reveal reveal-delay-1">From idea to shipped — in order</h2>
+    <p class="section-desc reveal reveal-delay-2">Most tasks follow this handoff chain. The critical rule: Claude stays upstream of the build step.</p>
+
+    <div class="pipeline-viz reveal reveal-delay-3">
+      <div class="pipeline-track">
+        <div class="pipeline-step">
+          <div class="pipeline-dot human">🙋</div>
+          <div class="pipeline-label">You</div>
+          <div class="pipeline-sublabel">Bring the problem or idea</div>
+        </div>
+        <div class="pipeline-connector"></div>
+        <div class="pipeline-step">
+          <div class="pipeline-dot claude-dot" style="font-size:14px;color:var(--claude);font-weight:700">C</div>
+          <div class="pipeline-label" style="color:var(--claude)">Claude</div>
+          <div class="pipeline-sublabel">Brainstorm, plan, spec</div>
+        </div>
+        <div class="pipeline-connector"></div>
+        <div class="pipeline-step">
+          <div class="pipeline-dot shared">📄</div>
+          <div class="pipeline-label">Plan file</div>
+          <div class="pipeline-sublabel">Handoff on disk</div>
+        </div>
+        <div class="pipeline-connector"></div>
+        <div class="pipeline-step">
+          <div class="pipeline-dot cortex-dot" style="font-size:13px;color:var(--cortex);font-weight:700">CX</div>
+          <div class="pipeline-label" style="color:var(--cortex)">Cortex</div>
+          <div class="pipeline-sublabel">Build → review loop</div>
+        </div>
+        <div class="pipeline-connector"></div>
+        <div class="pipeline-step">
+          <div class="pipeline-dot shared">✅</div>
+          <div class="pipeline-label">Shipped</div>
+          <div class="pipeline-sublabel">Committed & validated</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- TWO LANE -->
+<section id="routing">
+  <div class="container">
+    <p class="section-label reveal">Division of labor</p>
+    <h2 class="section-title reveal reveal-delay-1">Claude vs. Cortex — who owns what</h2>
+    <p class="section-desc reveal reveal-delay-2">When in doubt: if it produces code that runs on Snowflake, it belongs in Cortex.</p>
+
+    <div class="two-lane reveal reveal-delay-3">
+      <div class="lane claude-lane">
+        <div class="lane-header">
+          <div class="lane-icon claude-icon" style="font-size:14px;color:var(--claude);font-weight:700">C</div>
+          <div>
+            <div class="lane-name claude-name">Claude</div>
+            <div class="lane-role">Thinking · Planning · Reviewing</div>
+          </div>
+        </div>
+        <ul class="lane-list">
+          <li>Brainstorm approaches before committing to one</li>
+          <li>Write specs and implementation plans (as files on disk)</li>
+          <li>Architecture and strategy decisions</li>
+          <li>PR review — logic, conventions, known bugs</li>
+          <li>Jira ticket and Confluence page creation</li>
+          <li>Skill routing — finding the right tool for the job</li>
+          <li>Data quality assessment write-up</li>
+        </ul>
+        <hr class="lane-divider">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:8px;">KEY SKILLS</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">
+          <span class="trigger-chip">ce-plan</span>
+          <span class="trigger-chip">ce-brainstorm</span>
+          <span class="trigger-chip">ce-code-review</span>
+          <span class="trigger-chip">ce-strategy</span>
+          <span class="trigger-chip">ticket-builder</span>
+          <span class="trigger-chip">fev-pr-review</span>
+          <span class="trigger-chip">dq-assessment</span>
+          <span class="trigger-chip">uat-validator</span>
+        </div>
+      </div>
+
+      <div class="lane cortex-lane">
+        <div class="lane-header">
+          <div class="lane-icon cortex-icon" style="font-size:14px;color:var(--cortex);font-weight:700">CX</div>
+          <div>
+            <div class="lane-name cortex-name">Cortex Code</div>
+            <div class="lane-role">Building · Running · Iterating</div>
+          </div>
+        </div>
+        <ul class="lane-list">
+          <li>All Snowflake SQL — queries, DDL, DML</li>
+          <li>dbt models, sources, and YAML definitions</li>
+          <li>Snowpark Python notebooks and functions</li>
+          <li>Streamlit in Snowflake apps</li>
+          <li>Iterative build/review/fix loops on running code</li>
+          <li>Executing plan files handed off from Claude</li>
+          <li>Runtime validation — redeploy &amp; confirm it runs</li>
+        </ul>
+        <hr class="lane-divider">
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:8px;">HOW TO INVOKE</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">
+          <span class="trigger-chip" style="color:var(--cortex)">cortex run</span>
+          <span class="trigger-chip" style="color:var(--cortex)">--envelope RW</span>
+          <span class="trigger-chip" style="color:var(--cortex)">--envelope RO</span>
+          <span class="trigger-chip" style="color:var(--cortex)">--codex</span>
+          <span class="trigger-chip" style="color:var(--cortex)">--resume-last</span>
+        </div>
+        <div class="lane-warn">
+          <span class="warn-icon">⚠️</span>
+          <span>Never write Snowflake code inline in Claude. Always hand off via a plan file or direct Cortex prompt.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ROUTING TABLE -->
+<section>
+  <div class="container">
+    <p class="section-label reveal">Task → engine mapping</p>
+    <h2 class="section-title reveal reveal-delay-1">Priority routing rules</h2>
+    <p class="section-desc reveal reveal-delay-2">Use this when the right tool isn't obvious. Each row is a decision node — first match wins.</p>
+
+    <div class="reveal reveal-delay-3" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+      <table class="priority-table">
+        <thead>
+          <tr>
+            <th style="width:35%">Situation / signal</th>
+            <th style="width:35%">Correct engine</th>
+            <th>Route</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Something is broken — model wrong, SQL error, pipeline failure</td>
+            <td><span class="trigger-chip">ce-debug</span> then hand off to Cortex to fix</td>
+            <td><span class="priority-badge p-claude">Claude first</span></td>
+          </tr>
+          <tr>
+            <td>Any SQL that will run against a Snowflake table</td>
+            <td>Cortex directly — no Claude detour</td>
+            <td><span class="priority-badge p-cortex">Cortex</span></td>
+          </tr>
+          <tr>
+            <td>New dbt model, source, schema.yml, or metrics file</td>
+            <td>Cortex with plan file from Claude</td>
+            <td><span class="priority-badge p-cortex">Cortex</span></td>
+          </tr>
+          <tr>
+            <td>PR review — FEV/FFV pipeline</td>
+            <td><span class="trigger-chip">fev-pr-review</span> skill</td>
+            <td><span class="priority-badge p-claude">Claude</span></td>
+          </tr>
+          <tr>
+            <td>PR review — general FDVS conventions</td>
+            <td><span class="trigger-chip">code-qa-sentry</span> skill</td>
+            <td><span class="priority-badge p-claude">Claude</span></td>
+          </tr>
+          <tr>
+            <td>Creating a Jira ticket or Confluence page</td>
+            <td><span class="trigger-chip">ticket-builder</span> + Atlassian MCP</td>
+            <td><span class="priority-badge p-claude">Claude</span></td>
+          </tr>
+          <tr>
+            <td>DQ battery on a Snowflake table</td>
+            <td><span class="trigger-chip">dq-assessment</span> skill</td>
+            <td><span class="priority-badge p-claude">Claude</span></td>
+          </tr>
+          <tr>
+            <td>Slow Snowflake query or expensive dbt model</td>
+            <td><span class="trigger-chip">ce-optimize</span> → Cortex for fix</td>
+            <td><span class="priority-badge p-claude">Claude first</span></td>
+          </tr>
+          <tr>
+            <td>New Streamlit in Snowflake or Snowpark app</td>
+            <td>Cortex — it knows SiS deployment natively</td>
+            <td><span class="priority-badge p-cortex">Cortex</span></td>
+          </tr>
+          <tr>
+            <td>Architecture or strategy question</td>
+            <td><span class="trigger-chip">ce-strategy</span> skill</td>
+            <td><span class="priority-badge p-claude">Claude</span></td>
+          </tr>
+          <tr>
+            <td>Building an NBA-facing web UI</td>
+            <td><span class="trigger-chip">ce-frontend-design</span> skill</td>
+            <td><span class="priority-badge p-claude">Claude</span></td>
+          </tr>
+          <tr>
+            <td>Commit + push + open PR</td>
+            <td><span class="trigger-chip">ce-commit-push-pr</span> skill</td>
+            <td><span class="priority-badge p-claude">Claude</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- SKILL TABLE -->
+<section id="skills">
+  <div class="container">
+    <p class="section-label reveal">Full skill index</p>
+    <h2 class="section-title reveal reveal-delay-1">All available Claude skills</h2>
+    <p class="section-desc reveal reveal-delay-2">Every registered skill and what it does. Filter or search to find the right one fast.</p>
+
+    <div class="reveal reveal-delay-3">
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="skillSearch" placeholder="Search by task or skill name…" oninput="filterSkills()">
+      </div>
+      <div class="filter-pills">
+        <span class="pill all active" onclick="setPill('all', this)">All</span>
+        <span class="pill claude" onclick="setPill('claude', this)">Claude</span>
+        <span class="pill cortex" onclick="setPill('cortex', this)">Cortex</span>
+      </div>
+
+      <div class="skill-grid" id="skillGrid">
+        <!-- Header row -->
+        <div class="skill-row" style="background:var(--surface);border-radius:6px 6px 0 0;margin-bottom:2px;cursor:default;">
+          <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)">Skill</div>
+          <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)">When to use</div>
+          <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);text-align:right">Engine</div>
+        </div>
+
+        <!-- Skills data rows -->
+        <div class="skill-row" data-engine="claude" data-text="ce-plan starting new multi-phase project architecture">
+          <div class="skill-name">ce-plan</div>
+          <div class="skill-desc">Starting a new multi-phase project</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-work executing step by step from plan">
+          <div class="skill-name">ce-work</div>
+          <div class="skill-desc">Executing step-by-step from a plan (last resort)</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-debug broken model sql pipeline debugging">
+          <div class="skill-name">ce-debug</div>
+          <div class="skill-desc">Something is broken — model, SQL, pipeline</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-strategy high level direction architecture">
+          <div class="skill-name">ce-strategy</div>
+          <div class="skill-desc">High-level direction and architecture decisions</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-brainstorm ce-ideate explore approaches before committing">
+          <div class="skill-name">ce-brainstorm / ce-ideate</div>
+          <div class="skill-desc">Exploring approaches before committing to one</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-code-review reviewing PR sql change">
+          <div class="skill-name">ce-code-review</div>
+          <div class="skill-desc">Reviewing a PR or SQL change (general)</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="fev-pr-review fev ffv pipeline pr review">
+          <div class="skill-name">fev-pr-review</div>
+          <div class="skill-desc">PR review for FEV/FFV pipeline (8 layers, known bugs)</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="code-qa-sentry fdvs dbt conventions code review">
+          <div class="skill-name">code-qa-sentry</div>
+          <div class="skill-desc">Code review against FDVS dbt conventions</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-simplify-code dry cleanup refactor">
+          <div class="skill-name">ce-simplify-code</div>
+          <div class="skill-desc">Cleaning up code — DRY, simplify, reduce duplication</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ticket-builder jira confluence ticket creation">
+          <div class="skill-name">ticket-builder</div>
+          <div class="skill-desc">Create Jira tickets and Confluence pages (Jeff's style)</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="dq-assessment data quality table battery">
+          <div class="skill-name">dq-assessment</div>
+          <div class="skill-desc">DQ battery on a Snowflake table (12 tests, P1/P2/P3)</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="uat-validator uat validation">
+          <div class="skill-name">uat-validator</div>
+          <div class="skill-desc">UAT validation workflow</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-optimize slow query expensive model performance">
+          <div class="skill-name">ce-optimize</div>
+          <div class="skill-desc">Slow query or expensive dbt model — identify bottleneck</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-product-pulse amplitude fan engagement metrics">
+          <div class="skill-name">ce-product-pulse</div>
+          <div class="skill-desc">Amplitude / fan engagement metric analysis</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-frontend-design nba web ui frontend">
+          <div class="skill-name">ce-frontend-design</div>
+          <div class="skill-desc">Building NBA-facing web UI</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-doc-review confluence spec plan review">
+          <div class="skill-name">ce-doc-review</div>
+          <div class="skill-desc">Reviewing a Confluence spec or plan document</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-slack-research slack context past decision">
+          <div class="skill-name">ce-slack-research</div>
+          <div class="skill-desc">Finding Slack context on past decisions</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-commit-push-pr commit push open pr github">
+          <div class="skill-name">ce-commit-push-pr</div>
+          <div class="skill-desc">Commit + push + open PR in one step</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-commit commit staged changes git">
+          <div class="skill-name">ce-commit</div>
+          <div class="skill-desc">Commit staged changes only (no push)</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-resolve-pr-feedback resolve pr review comments">
+          <div class="skill-name">ce-resolve-pr-feedback</div>
+          <div class="skill-desc">Address reviewer comments on an open PR</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-clean-gone-branches clean stale local branches git">
+          <div class="skill-name">ce-clean-gone-branches</div>
+          <div class="skill-desc">Periodic cleanup of local branches with gone remotes</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="claude" data-text="ce-test-browser manual qa web ui browser">
+          <div class="skill-name">ce-test-browser</div>
+          <div class="skill-desc">Manual QA on a web UI — golden path + edge cases</div>
+          <div class="skill-owner"><span class="priority-badge p-claude">Claude</span></div>
+        </div>
+        <div class="skill-row" data-engine="cortex" data-text="snowflake-sql sql query ddl snowflake">
+          <div class="skill-name">snowflake-sql</div>
+          <div class="skill-desc">Snowflake SQL development — metadata-first approach</div>
+          <div class="skill-owner"><span class="priority-badge p-cortex">Cortex</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- GUARDRAILS -->
+<section id="guardrails">
+  <div class="container">
+    <p class="section-label reveal">Hard boundaries</p>
+    <h2 class="section-title reveal reveal-delay-1">Guardrails — always enforced</h2>
+    <p class="section-desc reveal reveal-delay-2">These are not preferences. They prevent real incidents.</p>
+
+    <div class="guardrail-grid reveal reveal-delay-3">
+      <div class="guardrail-card">
+        <div class="guardrail-icon">🔒</div>
+        <div class="guardrail-title">Production schema is off-limits</div>
+        <div class="guardrail-body">
+          Never write objects to <code style="font-family:var(--font-mono);font-size:11px;color:var(--red)">DB_FANDATA_GOLD_PRD</code> or any schema other than <code style="font-family:var(--font-mono);font-size:11px;color:var(--green)">JEFF_DEV_SCHEMA</code> for personal work.
+          <span class="guardrail-code">✓ DB_FANANALYTICS.JEFF_DEV_SCHEMA</span>
+          <span class="guardrail-bad">✗ DB_FANDATA_GOLD_PRD.*</span>
+        </div>
+      </div>
+      <div class="guardrail-card">
+        <div class="guardrail-icon">🤝</div>
+        <div class="guardrail-title">Shared repo — never overwrite others</div>
+        <div class="guardrail-body">
+          In shared repos (dbt_analytics, fandata_dbt), propose merges instead of overwriting someone else's work. Personal proposals stay in the local project folder — never merged without team review.
+        </div>
+      </div>
+      <div class="guardrail-card">
+        <div class="guardrail-icon">📋</div>
+        <div class="guardrail-title">Stakeholder confirmation before tickets</div>
+        <div class="guardrail-body">
+          Confirm names, approval, and justification before creating any Jira ticket or Confluence page. No "draft and delete" — creation is a visible action.
+        </div>
+      </div>
+      <div class="guardrail-card">
+        <div class="guardrail-icon">🧪</div>
+        <div class="guardrail-title">Run before commit</div>
+        <div class="guardrail-body">
+          Always run and validate code locally before any GitHub commit. For Snowflake: redeploy and confirm the app runs at runtime.
+          <span class="guardrail-bad">✗ ast.parse passing ≠ code works</span>
+          <span class="guardrail-code">✓ Redeploy → open → confirm runtime</span>
+        </div>
+      </div>
+      <div class="guardrail-card">
+        <div class="guardrail-icon">🔌</div>
+        <div class="guardrail-title">Always use MCP for Jira/Confluence</div>
+        <div class="guardrail-body">
+          Use <code style="font-family:var(--font-mono);font-size:11px;color:var(--claude)">mcp__plugin_atlassian_atlassian__*</code> tools. Never curl, fetch, or direct REST calls to Jira/Confluence endpoints.
+        </div>
+      </div>
+      <div class="guardrail-card">
+        <div class="guardrail-icon">🏗️</div>
+        <div class="guardrail-title">Metadata-first development</div>
+        <div class="guardrail-body">
+          Every Snowflake table and column gets a <code style="font-family:var(--font-mono);font-size:11px;color:var(--green)">COMMENT</code>. Heavy annotation in dbt YAML. This overrides the default no-comment behavior.
+        </div>
+      </div>
+      <div class="guardrail-card">
+        <div class="guardrail-icon">📌</div>
+        <div class="guardrail-title">Jira = executable work only</div>
+        <div class="guardrail-body">
+          Only create a Jira story if someone will execute it (a DE task, a dbt PR, a validation run). If the purpose is sharing findings with a stakeholder for their review or input, route to Confluence or Slack instead — not a story. Stakeholder reads clutter the backlog and create false velocity.
+          <span class="guardrail-code">✓ Colin needs to decide → Confluence/Slack</span>
+          <span class="guardrail-bad">✗ "Colin review" as a Jira story</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- JIRA SECTION -->
+<section id="jira">
+  <div class="container">
+    <p class="section-label reveal">Jira routing</p>
+    <h2 class="section-title reveal reveal-delay-1">One project. Two components. Six templates.</h2>
+    <p class="section-desc reveal reveal-delay-2">All FDVS work lands in the <strong>IDE</strong> project. The component determines the team lane. The template determines how the ticket is structured.</p>
+
+    <!-- Board structure -->
+    <div class="reveal reveal-delay-3" style="margin-bottom:2rem;">
+      <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:0.75rem;">Project structure</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-radius:12px;overflow:hidden;">
+
+        <div style="background:var(--surface);padding:1.75rem;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+            <div style="width:32px;height:32px;border-radius:6px;background:#0052cc;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:12px;color:#fff;flex-shrink:0;">J</div>
+            <div>
+              <div style="font-weight:600;font-size:15px;">IDE project</div>
+              <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">nba.atlassian.net · projectKey: IDE</div>
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--muted);line-height:1.6;">The single Jira project for all Fan Data Value Stream work — ingest, dbt models, ML, DQ, migrations. All FDVS tickets go here. No separate boards per sub-team.</p>
+          <div style="margin-top:1rem;padding:10px 12px;background:var(--surface2);border-radius:6px;border:1px solid var(--border2);">
+            <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:4px;">Default assignee</div>
+            <div style="font-family:var(--font-mono);font-size:12px;color:var(--text);">[Your Name] — <span style="color:var(--dim);">set in config.local.yaml</span></div>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);padding:1.75rem;">
+          <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:0.75rem;">Components — the routing lane</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="padding:12px 14px;background:var(--claude-dim);border:1px solid rgba(29,111,212,0.2);border-radius:8px;">
+              <div style="font-weight:600;font-size:13px;color:var(--claude);margin-bottom:3px;">Fan Data Value Stream</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">Identity layer, ingest pipelines, vendor feeds, DQ, migrations, Snowflake infrastructure. DE-owned work.</div>
+            </div>
+            <div style="padding:12px 14px;background:var(--cortex-dim);border:1px solid rgba(13,148,136,0.2);border-radius:8px;">
+              <div style="font-weight:600;font-size:13px;color:var(--cortex);margin-bottom:3px;">Analytics Engineering</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.5;">dbt models, marts, FEV/FFV metrics, fan-grain gold tables, AE layer work.</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;padding:10px 12px;background:rgba(180,83,9,0.06);border:1px solid rgba(180,83,9,0.2);border-radius:6px;font-size:12px;color:#92400e;">
+            <strong>Template F exception:</strong> assign to the technical lead for that layer — not the ticket creator. Use FDVS for DE layer, AE for dbt layer.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gate -->
+    <div class="reveal reveal-delay-4" style="margin-bottom:2rem;padding:1.25rem 1.5rem;background:rgba(29,111,212,0.05);border:1px solid rgba(29,111,212,0.2);border-radius:10px;display:flex;gap:16px;align-items:flex-start;">
+      <div style="font-size:1.4rem;flex-shrink:0;margin-top:2px;">🔐</div>
+      <div>
+        <div style="font-weight:600;font-size:14px;margin-bottom:4px;">Stakeholder confirmation gate — always required before creating tickets</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">Before using <span class="trigger-chip">ticket-builder</span>, confirm three things: <strong>(1)</strong> who the stakeholders are (names + roles), <strong>(2)</strong> who has approved the work, <strong>(3)</strong> the business justification. Exception: Template F (Investigation / Anomaly Flag) — this is a lightweight ask, no gate required.</div>
+      </div>
+    </div>
+
+    <!-- Template decision tree -->
+    <div class="reveal" style="margin-bottom:2rem;">
+      <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:0.75rem;">Template routing — pick by work type</div>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+
+        <!-- Header -->
+        <div style="display:grid;grid-template-columns:2fr 2fr 1fr 120px;gap:1rem;padding:8px 14px;">
+          <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);">Work type</div>
+          <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);">Examples</div>
+          <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);">Component</div>
+          <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);text-align:right;">Template</div>
+        </div>
+
+        <div class="jira-row" style="display:grid;grid-template-columns:2fr 2fr 1fr 120px;gap:1rem;padding:12px 14px;border-radius:6px;background:var(--surface);align-items:start;transition:background .15s;">
+          <div>
+            <div style="font-size:13px;font-weight:500;margin-bottom:3px;">New vendor feed / API source / partner ingest</div>
+            <div style="font-size:12px;color:var(--muted);">Raw ingest → staging → gold layer, vendor connection</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">MediaKind, Rakuten, Yinzcam, Satisfi, Sports Radar, Jr NBA League Apps</div>
+          <div><span class="priority-badge p-claude" style="font-size:10px;">FDVS</span></div>
+          <div style="text-align:right;"><span class="template-badge" style="background:rgba(29,111,212,0.08);color:var(--claude);border:1px solid rgba(29,111,212,0.2);">Template A</span></div>
+        </div>
+
+        <div class="jira-row" style="display:grid;grid-template-columns:2fr 2fr 1fr 120px;gap:1rem;padding:12px 14px;border-radius:6px;background:var(--surface);align-items:start;transition:background .15s;">
+          <div>
+            <div style="font-size:13px;font-weight:500;margin-bottom:3px;">Analytics engineering / dbt model / mart</div>
+            <div style="font-size:12px;color:var(--muted);">New intermediate, gold table, schema.yml, metric, AE layer refactor</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">FEV gold table, FFV clusters, fan cohort mart, dbt source + staging pipeline</div>
+          <div><span class="priority-badge p-cortex" style="font-size:10px;">AE</span></div>
+          <div style="text-align:right;"><span class="template-badge" style="background:rgba(13,148,136,0.08);color:var(--cortex);border:1px solid rgba(13,148,136,0.2);">Template B</span></div>
+        </div>
+
+        <div class="jira-row" style="display:grid;grid-template-columns:2fr 2fr 1fr 120px;gap:1rem;padding:12px 14px;border-radius:6px;background:var(--surface);align-items:start;transition:background .15s;">
+          <div>
+            <div style="font-size:13px;font-weight:500;margin-bottom:3px;">Data quality / monitoring / DQ assessment</div>
+            <div style="font-size:12px;color:var(--muted);">Broken pipeline, UAT finding, count mismatch, PII exposure</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">Evergent subscription errors, Roku missing dates, exposed emails</div>
+          <div><span class="priority-badge p-claude" style="font-size:10px;">FDVS</span></div>
+          <div style="text-align:right;"><span class="template-badge" style="background:rgba(29,111,212,0.08);color:var(--claude);border:1px solid rgba(29,111,212,0.2);">Template C</span></div>
+        </div>
+
+        <div class="jira-row" style="display:grid;grid-template-columns:2fr 2fr 1fr 120px;gap:1rem;padding:12px 14px;border-radius:6px;background:var(--surface);align-items:start;transition:background .15s;">
+          <div>
+            <div style="font-size:13px;font-weight:500;margin-bottom:3px;">Platform migration / deprecation / backfill</div>
+            <div style="font-size:12px;color:var(--muted);">Moving objects between environments, schema migrations</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">Sandbox → dbt, Azure → Snowflake, db_fivetran → FDP, legacy table deprecation</div>
+          <div><span class="priority-badge p-claude" style="font-size:10px;">FDVS</span></div>
+          <div style="text-align:right;"><span class="template-badge" style="background:rgba(29,111,212,0.08);color:var(--claude);border:1px solid rgba(29,111,212,0.2);">Template D</span></div>
+        </div>
+
+        <div class="jira-row" style="display:grid;grid-template-columns:2fr 2fr 1fr 120px;gap:1rem;padding:12px 14px;border-radius:6px;background:var(--surface);align-items:start;transition:background .15s;">
+          <div>
+            <div style="font-size:13px;font-weight:500;margin-bottom:3px;">Data science / ML model / propensity</div>
+            <div style="font-size:12px;color:var(--muted);">Propensity models, segmentation, recommendation engines, fan LTV</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">FFV Phase 2, Propensity to Convert, FEV Cohort Analysis, Game Recommendation V2</div>
+          <div><span class="priority-badge p-claude" style="font-size:10px;">FDVS</span></div>
+          <div style="text-align:right;"><span class="template-badge" style="background:rgba(29,111,212,0.08);color:var(--claude);border:1px solid rgba(29,111,212,0.2);">Template E</span></div>
+        </div>
+
+        <div class="jira-row" style="display:grid;grid-template-columns:2fr 2fr 1fr 120px;gap:1rem;padding:12px 14px;border-radius:6px;background:rgba(180,83,9,0.04);border:1px solid rgba(180,83,9,0.15);align-items:start;transition:background .15s;">
+          <div>
+            <div style="font-size:13px;font-weight:500;margin-bottom:3px;">Investigation / anomaly flag</div>
+            <div style="font-size:12px;color:var(--muted);">PM surfacing a data finding to a technical lead — lightweight ask, no gate</div>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">Suspicious email domains, CIAM-deleted fans in dbt outputs, identity layer anomalies</div>
+          <div><span style="font-family:var(--font-mono);font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(180,83,9,0.1);color:#92400e;border:1px solid rgba(180,83,9,0.2);">Varies</span></div>
+          <div style="text-align:right;"><span class="template-badge" style="background:rgba(180,83,9,0.08);color:#92400e;border:1px solid rgba(180,83,9,0.2);">Template F</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Ticket style rules -->
+    <div class="reveal reveal-delay-1">
+      <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:0.75rem;">Writing conventions</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border-radius:12px;overflow:hidden;">
+        <div style="background:var(--surface);padding:1.5rem;">
+          <div style="font-weight:600;font-size:13px;margin-bottom:0.6rem;">Summary line</div>
+          <ul class="lane-list">
+            <li style="font-size:13px;">Verb-first, ≤70 chars</li>
+            <li style="font-size:13px;"><span class="trigger-chip" style="color:var(--green);border-color:rgba(22,163,74,.3);">✓ "Add X"</span> <span class="trigger-chip" style="color:var(--green);border-color:rgba(22,163,74,.3);">"Fix Y"</span> <span class="trigger-chip" style="color:var(--green);border-color:rgba(22,163,74,.3);">"Migrate Z"</span></li>
+            <li style="font-size:13px;">No vague phrases ("Placeholder", "TBD", "WIP")</li>
+          </ul>
+        </div>
+        <div style="background:var(--surface);padding:1.5rem;">
+          <div style="font-weight:600;font-size:13px;margin-bottom:0.6rem;">Description must include</div>
+          <ul class="lane-list">
+            <li style="font-size:13px;">User story leads every ticket</li>
+            <li style="font-size:13px;">Evidence-based AC (testable, specific)</li>
+            <li style="font-size:13px;">Stakeholder table with roles</li>
+          </ul>
+          <div style="margin-top:10px;padding:8px 10px;background:rgba(220,38,38,0.04);border:1px solid rgba(220,38,38,0.15);border-radius:5px;font-size:12px;color:#b91c1c;">
+            Omit: Testing Strategy · Success Metrics · Dependencies (BLOCKED BY/BLOCKS)<br>
+            Never use: <code style="font-family:var(--font-mono);font-size:10px;">db_bronze</code> or <code style="font-family:var(--font-mono);font-size:10px;">db_silver</code> → use <code style="font-family:var(--font-mono);font-size:10px;">db_fandata_prd</code><br>
+            Never reference: Alation (catalog, lineage, or monitoring refs belong in internal docs only)
+          </div>
+        </div>
+        <div style="background:var(--surface);padding:1.5rem;">
+          <div style="font-weight:600;font-size:13px;margin-bottom:0.6rem;">Style guide links</div>
+          <ul class="lane-list">
+            <li style="font-size:13px;">SQL / ingest tickets → SQL Style Guide</li>
+            <li style="font-size:13px;">dbt / AE tickets → dbt Guide</li>
+            <li style="font-size:13px;">Only confirmed URLs — no dead links</li>
+            <li style="font-size:13px;">No Alation refs in ticket body</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Epic → Confluence rule -->
+    <div class="reveal reveal-delay-2" style="margin-top:1.5rem;display:flex;gap:16px;align-items:flex-start;padding:1.25rem 1.5rem;background:var(--surface);border:1px solid var(--border2);border-radius:10px;">
+      <div style="font-size:1.4rem;flex-shrink:0;">📄</div>
+      <div>
+        <div style="font-weight:600;font-size:14px;margin-bottom:4px;">Every new Epic → paired Confluence page</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">When you create an Epic, <span class="trigger-chip">ticket-builder</span> will also create a Confluence page in the same motion. The page must show: business outcome, stakeholder table with approval status, success metrics, timeline, and strategic alignment to FDVS goals. Stories and Tasks don't need a page.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider">
+
+<footer>
+  <span>Fan Data Value Stream</span> · Internal reference · Generated 2026-06-09 · Not for external distribution
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(r => observer.observe(r));
+
+  // Skill filter
+  let activeEngine = 'all';
+
+  function filterSkills() {
+    const q = document.getElementById('skillSearch').value.toLowerCase();
+    document.querySelectorAll('#skillGrid .skill-row[data-engine]').forEach(row => {
+      const text = (row.dataset.text || '') + row.textContent;
+      const matchSearch = !q || text.toLowerCase().includes(q);
+      const matchEngine = activeEngine === 'all' || row.dataset.engine === activeEngine;
+      row.classList.toggle('hidden', !(matchSearch && matchEngine));
+    });
+  }
+
+  function setPill(engine, el) {
+    activeEngine = engine;
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    filterSkills();
+  }
+</script>
+</body>
+</html>

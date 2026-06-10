@@ -1,0 +1,16 @@
+{
+  "name": "fdvs-personal",
+  "version": "1.0.0",
+  "description": "Personal skills and workflows for Fan Data Value Stream work — ticket creation, DQ assessment, PR review, UAT validation",
+  "author": {
+    "name": "FDVS Team Member"
+  },
+  "keywords": [
+    "nba",
+    "fan-data",
+    "snowflake",
+    "fev",
+    "ffv",
+    "dbt"
+  ]
+}
