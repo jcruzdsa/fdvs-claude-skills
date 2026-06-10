@@ -1,16 +1,21 @@
 # Configuration for fdvs-skills plugin
 # Copy this file and fill in values for your environment.
-# The ticket-builder skill reads these values — update them before using that skill.
+# Skills that read this file: ticket-builder (atlassian), snowflake-sql (snowflake), code-qa-sentry (team).
 
 atlassian:
   cloud_id: "YOUR_CLOUD_ID"              # e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
   project_key: "IDE"                      # Jira project key for FDVS work
   default_assignee_account_id: "YOUR_ACCOUNT_ID"  # Your Atlassian account ID
 
+snowflake:
+  role: "YOUR_SNOWFLAKE_ROLE"           # e.g. FR_ANALYST — used by snowflake-sql skill
+  connection: "NBA-DATA"                # Named connection in ~/.snowflake/connections.toml
+
 team:
   name: "Fan Data Value Stream"
   stream: "FDVS"
   snowflake_dev_schema: "DB_FANANALYTICS.YOUR_DEV_SCHEMA"
+  code_patterns_file: "~/.claude/projects/memory/code_patterns.md"  # used by code-qa-sentry
 
 references:
   sql_style_guide_url: "https://nba.atlassian.net/wiki/spaces/NGEW/pages/8719696245/SQL+Style+Guide"
