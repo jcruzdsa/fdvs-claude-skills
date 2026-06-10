@@ -14,7 +14,7 @@ def connect_to_snowflake(
     warehouse='FR_ANALYST_WH',  # From memory: FR_ANALYST role uses this warehouse
     database=None,
     schema=None,
-    role='FR_ANALYST'  # From memory: Jeff's Snowflake role
+    role='FR_ANALYST'  # Default FDVS analyst role — update if your role differs
 ):
     """
     Connect to NBA Snowflake using SSO authentication.

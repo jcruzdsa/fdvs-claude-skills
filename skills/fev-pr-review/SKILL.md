@@ -2,7 +2,7 @@
 name: fev-pr-review
 description: >-
   Structured PR review for FEV/FFV dbt model changes in the dbt_analytics repo.
-  Use WHEN Jeff shares a PR link touching the FEV/FFV pipeline: metrics/fan_by_fiscal_year,
+  Use WHEN a PR link is shared touching the FEV/FFV pipeline: metrics/fan_by_fiscal_year,
   intermediate/future_fan_value_dashboard, marts/future_fan_value_dashboard,
   staging/unified, or any model that references FFV_PROPENSITY, FFV_CLUSTERS,
   metrics_fev_by_fan_id, or metrics_by_fan_by_fiscal_year.
@@ -10,7 +10,7 @@ description: >-
   and produces a structured review with block/comment/approve recommendation.
   Triggers: PR, pull request, FFV, FEV, dbt, fan_by_fiscal_year, fev_by_fan_id,
   ffv_clusters, ffv_propensity, future_fan_value, touchpoints, agg_revenue,
-  agg_cohort, agg_fan_profiles, Aryan, dbt_analytics, 52611.
+  agg_cohort, agg_fan_profiles, dbt_analytics.
 ---
 
 # FEV/FFV PR Review — dbt_analytics
@@ -193,7 +193,7 @@ Work through every item. Mark ✅ PASS, ⚠️ WARN, or ❌ BLOCK.
 
 ---
 
-## Jeff's Standards That Apply to All FEV PRs
+## FDVS Standards That Apply to All FEV PRs
 
 1. **Metadata-first:** Every new or modified table/view should have a table-level COMMENT and column-level COMMENTs using `DEFINITION:` / `SOURCE:` / `VALIDATION:` format (see FFV 2026 Metadata-First Retrofit session)
 2. **No Infutor for modeling:** `infutor_*` columns are third-party lifestyle signals — not organic fan behavior. Should be excluded from any training feature set

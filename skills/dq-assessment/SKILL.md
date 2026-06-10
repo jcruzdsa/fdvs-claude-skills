@@ -1,7 +1,7 @@
 ---
 name: dq-assessment
 description: >-
-  Full data quality assessment for NBA FDP Snowflake tables. Use WHEN Jeff asks
+  Full data quality assessment for NBA FDP Snowflake tables. Use WHEN asked
   to QA, assess, audit, or validate a table. Runs a standardized test battery
   using Opus 4.7 for queries and Sonnet for the written report. Covers PK
   integrity, temporal logic, fill rates, ETL audit columns, row_hash collisions,

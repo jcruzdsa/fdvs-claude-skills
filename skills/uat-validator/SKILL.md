@@ -2,8 +2,8 @@
 name: uat-validator
 description: >-
   Two-phase QA skill. Reads a Jira ticket + Snowflake table name, builds a
-  test plan (Phase 1), then outputs a Cortex goal string for Jeff to run
-  (Phase 2). Use WHEN Jeff asks to validate, QA, or UAT a Snowflake object
+  test plan (Phase 1), then outputs a Cortex goal string to run
+  (Phase 2). Use WHEN asked to validate, QA, or UAT a Snowflake object
   against a Jira ticket.
   Triggers: validate, QA, UAT, test this table, check this against the ticket.
 ---
