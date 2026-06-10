@@ -1,5 +1,5 @@
 #!/bin/bash
-# install.sh — set up fdvs-personal plugin symlinks
+# install.sh — set up fdvs-skills plugin symlinks
 # Run once after cloning the repo.
 # Usage: bash install.sh
 
@@ -7,9 +7,9 @@ set -e
 
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILLS_DIR="$HOME/.claude/skills"
-PLUGIN_TARGET="$HOME/.claude/plugins/fdvs-personal"
+PLUGIN_TARGET="$HOME/.claude/plugins/fdvs-skills"
 
-echo "Installing fdvs-personal plugin..."
+echo "Installing fdvs-skills plugin..."
 
 # Symlink the plugin folder into ~/.claude/plugins/
 mkdir -p "$HOME/.claude/plugins"

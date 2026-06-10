@@ -462,5 +462,5 @@ After writing any FDP SQL:
 
 ## Related Skills
 
-- `fdvs-personal:ticket-builder` — Creates Jira tickets for Fan Data Value Stream work
+- `fdvs-skills:ticket-builder` — Creates Jira tickets for Fan Data Value Stream work
 - `ticket-builder` — Creates Jira tickets for Fan Data Value Stream work

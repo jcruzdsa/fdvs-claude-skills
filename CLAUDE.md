@@ -1,4 +1,4 @@
-# Global Instructions for Claude Code — fdvs-personal Plugin
+# Global Instructions for Claude Code — fdvs-skills Plugin
 
 ## Skill Routing
 
