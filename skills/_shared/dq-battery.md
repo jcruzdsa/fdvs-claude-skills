@@ -251,3 +251,11 @@ Always check these regardless of the table:
 - For tables with >500M rows, consider sampling CTEs before running distribution queries
 - Always check `information_schema.columns` first to confirm column names before building the test queries
 - The `--enable-templating NONE` flag is required when executing SQL files with COMMENT clauses
+- **CoCo has a ~120s per-invocation wall-clock limit.** On very large tables (multi-billion rows),
+  a single call that bundles several full-scan aggregations will time out. Mitigate by: (a) running
+  one test per CoCo call rather than batching, and/or (b) using `TABLESAMPLE`/`SAMPLE (n)` to
+  estimate rates on a representative slice. Confirmed on `FAN_ID_EVENT` (~14.4B rows): a batched
+  4-test full-scan call timed out at 120s; a single `SAMPLE (1)` call returned in-window.
+- **Adapt the battery to the actual schema.** Skip or rewrite tests whose columns don't exist
+  (e.g. `FAN_ID_EVENT` has `ETL_INSERT_DATETIME_EST` but no `ETL_UPDATE_DATETIME_EST`, and its feed
+  column is `SOURCE_NAME`, not `FEED_NAME`). Confirm columns via `information_schema` before building queries.
