@@ -33,6 +33,13 @@ for skill_path in "$PLUGIN_DIR/skills"/*/; do
   skill_name="$(basename "$skill_path")"
   target="$SKILLS_DIR/$skill_name"
 
+  # Skip directories that aren't skills (e.g. _shared/ holds shared
+  # references with no SKILL.md). They stay reachable via the plugin symlink.
+  if [ ! -f "$skill_path/SKILL.md" ]; then
+    echo "  Skipping $skill_name (no SKILL.md — shared resource)"
+    continue
+  fi
+
   if [ -d "$target" ] && [ ! -L "$target" ]; then
     echo "ERROR: $target exists as a real directory. Move or rename it first."
     exit 1

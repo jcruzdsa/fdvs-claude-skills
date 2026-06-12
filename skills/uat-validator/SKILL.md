@@ -1,11 +1,13 @@
 ---
 name: uat-validator
 description: >-
-  Two-phase QA skill. Reads a Jira ticket + Snowflake table name, builds a
-  test plan (Phase 1), then outputs a Cortex goal string to run
-  (Phase 2). Use WHEN asked to validate, QA, or UAT a Snowflake object
-  against a Jira ticket.
-  Triggers: validate, QA, UAT, test this table, check this against the ticket.
+  Ticket-anchored two-phase QA skill. Reads a Jira ticket + Snowflake table
+  name, builds a test plan validating the table against the ticket's acceptance
+  criteria (Phase 1), then outputs a Cortex goal string to run (Phase 2). Use
+  WHEN validating or signing off a Snowflake object against a Jira ticket.
+  Triggers: UAT, validate against ticket, QA against acceptance criteria,
+  sign-off, test this table against the ticket. NOTE: exploratory or standalone
+  DQ assessment with NO ticket lives in the `dq-assessment` skill.
 ---
 
 # uat-validator
@@ -24,17 +26,13 @@ Use `mcp__plugin_atlassian_atlassian__getJiraIssue` with the provided ticket key
 - Discover `cloudId` first with `mcp__plugin_atlassian_atlassian__getAccessibleAtlassianResources` if not already known.
 - Extract: summary, description, acceptance criteria, any column names or business rules mentioned.
 
-### Step 2: Pull column metadata
+### Step 2: Confirm column metadata (via Cortex)
 
-Run a direct Snowflake query (via `snow sql`) to get column names:
-```
-SELECT column_name, data_type, is_nullable
-FROM <DB>.INFORMATION_SCHEMA.COLUMNS
-WHERE table_schema = '<SCHEMA>'
-  AND table_name = '<TABLE>'
-ORDER BY ordinal_position
-```
-If Snowflake is not directly accessible from this session, Cortex will introspect columns at runtime — skip this step.
+Claude never runs SQL directly — column introspection goes through Cortex Code CLI like every other query. You have two options:
+- **Defer to Phase 2 (default):** column introspection happens at runtime inside the Cortex goal. Cortex reads `information_schema.columns` to confirm column names before building the test queries, so Phase 1 can proceed on the ticket and table name alone.
+- **Confirm now:** if you need column names to shape the test plan, ask Cortex to introspect them — never query Snowflake from this session.
+
+Whichever option you use, the column lookup is a Cortex-executed query, not a `snow sql` call.
 
 ### Step 3: Build the test plan
 
@@ -44,6 +42,8 @@ Produce a numbered list of checks. For each check, state:
 - Whether it came from the ticket (`[FROM TICKET]`) or was inferred (`[INFERRED]`)
 
 **Standard checks always included (mark `[INFERRED]` unless ticket overrides):**
+
+The standard FDP integrity checks — PK uniqueness, null checks, sentinel/epoch dates, ETL audit columns, categorical value sets, numeric range anomalies, etc. — are defined in `../_shared/dq-battery.md`. Pull the ones applicable to the table's grain and schema and add them as `[INFERRED]` checks rather than re-listing SQL here. At minimum, always include:
 1. Row count > 0
 2. No column is 100% NULL
 3. Primary key (or grain) is unique — infer grain from table name and ticket context

@@ -7,9 +7,9 @@ Use the right skill before responding. These skills are part of this plugin:
 | Task | Skill |
 |---|---|
 | Jira tickets / Confluence specs | `ticket-builder` |
-| DQ assessment on a Snowflake table | `dq-assessment` |
+| Exploratory DQ assessment on a Snowflake table (table only, no ticket) | `dq-assessment` |
 | Code review against FDVS conventions | `code-qa-sentry` |
-| UAT validation | `uat-validator` |
+| UAT validation against a Jira ticket's acceptance criteria | `uat-validator` |
 | Snowflake SQL development | `snowflake-sql` *(routes to Cortex Code CLI — do not execute SQL directly in Claude)* |
 
 For all other tasks (planning, brainstorming, debugging, strategy, optimization, committing), use the `compound-engineering:ce-*` skills from the compound-engineering plugin.
