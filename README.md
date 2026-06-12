@@ -22,8 +22,8 @@ This repo makes those tools available to anyone on the team doing similar FDVS w
 |---|---|
 | `ticket-builder` | Creates Jira tickets and Confluence pages using 6 canonical FDVS templates (ingest, AE, DQ, migration, DS/ML, investigation) |
 | `snowflake-sql` | Snowflake SQL development — routes SQL execution to Cortex Code CLI |
-| `dq-assessment` | Full data quality battery for FDP tables: 12 tests, P1/P2/P3 findings |
-| `uat-validator` | UAT validation reports with pass/fail checklists and sign-off tracking |
+| `dq-assessment` | Exploratory, standalone data quality battery on an FDP table (no ticket required): 12 tests, P1/P2/P3 findings |
+| `uat-validator` | Validates a table against a Jira ticket's acceptance criteria — pass/fail checklists and sign-off tracking |
 | `code-qa-sentry` | QA review when tickets close or branches merge, checked against FDVS conventions |
 
 ---
@@ -84,8 +84,8 @@ Quick reference:
 |---|---|
 | Jira ticket or Confluence page | `/ticket-builder` |
 | Snowflake SQL | `/snowflake-sql` |
-| DQ assessment | `/dq-assessment` |
-| UAT validation | `/uat-validator` |
+| Exploratory DQ assessment (no ticket) | `/dq-assessment` |
+| UAT against a Jira ticket | `/uat-validator` |
 | Code QA on merge | `/code-qa-sentry` |
 
 ---
